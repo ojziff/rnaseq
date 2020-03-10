@@ -902,7 +902,7 @@ if (!params.skipTrimming) {
  */
 if (!params.removeRiboRNA) {
     trimgalore_reads
-        .into { trimmed_reads_alignment; trimmed_reads_salmon }
+        .into { trimmed_reads_alignment; trimmed_reads_salmon; trimmed_reads_kallisto }
     sortmerna_logs = Channel.empty()
 } else {
     process sortmerna_index {
@@ -940,7 +940,7 @@ if (!params.removeRiboRNA) {
         file(db) from sortmerna_db.collect()
 
         output:
-        set val(name), file("*.fq.gz") into trimmed_reads_alignment, trimmed_reads_salmon
+        set val(name), file("*.fq.gz") into trimmed_reads_alignment, trimmed_reads_salmon, trimmed_reads_kallisto
         file "*_rRNA_report.txt" into sortmerna_logs
 
 
@@ -1648,7 +1648,7 @@ process kallisto {
       publishDir "${params.outdir}/kallisto", mode: 'copy'
 
       input:
-      set sample, file(reads) from trimmed_reads_kallisto
+      set sample, file(reads) from eads_kallisto
       file index from kallisto_index
 
       output:
@@ -1663,6 +1663,68 @@ process kallisto {
           -b 100 \\
           --rf-stranded \\
           $reads
+      """
+}
+
+
+process vastools_align {
+      label 'high_memory'
+      tag "$sample"
+      publishDir "${params.outdir}/vast-tools", mode: 'copy'
+
+      input:
+      set sample, file(reads) from raw_reads_vastools
+
+      output:
+      file "vast_out/*" into vastools_aligned
+
+      script:
+      """
+      vast-tools align ${sample} -c 8 -sp Hsa
+      """
+}
+
+
+params.merge_groups = "/camp/home/ziffo/working/oliver/projects/astrocyte-fractionation-bulk-rnaseq/sample-details/vastools_merge_groups.txt"
+Channel
+    .from(params.merge_groups, checkIfExists: true)
+    .ifEmpty { exit 1, "vastools merge groups file not found: ${params.merge_groups}" }
+    .set { vastools_merge_groups }
+
+
+process vastools_merge {
+      label 'mid_memory'
+      tag "$sample"
+      publishDir "${params.outdir}/vast-tools", mode: 'copy'
+
+      input:
+      file ("vast_out/*") from vastools_aligned
+      file merge_groups from vastools_merge_groups
+
+      output:
+      file "vast_out/to_combine/*" into vastools_merged
+
+      script:
+      """
+      vast-tools merge --groups $merge_groups --sp Hsa --move_to_PARTS PARTS
+      """
+}
+
+
+process vastools_combine {
+      label 'mid_memory'
+      tag "$sample"
+      publishDir "${params.outdir}/vast-tools", mode: 'copy'
+
+      input:
+      file "vast_out/to_combine/*" from vastools_merged
+
+      output:
+      file "vast_out/*" into vastools_combined
+
+      script:
+      """
+      vast-tools combine -sp Hsa -v
       """
 }
 
