@@ -1648,7 +1648,7 @@ process kallisto {
       publishDir "${params.outdir}/kallisto", mode: 'copy'
 
       input:
-      set sample, file(reads) from reads_kallisto
+      set sample, file(reads) from trimmed_reads_kallisto
       file index from kallisto_index
 
       output:
