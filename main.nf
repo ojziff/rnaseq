@@ -1649,7 +1649,6 @@ process kallisto {
 
       input:
       set sample, file(reads) from trimmed_reads_kallisto
-      file index from kallisto_index
 
       output:
       file "${sample}/abundance.h5" into kallisto_h5
