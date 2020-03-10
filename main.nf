@@ -1667,25 +1667,6 @@ process kallisto {
 }
 
 
-if (params.gff && !params.gtf) {
-    process convertGFFtoGTF {
-        tag "$gff"
-        publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
-                   saveAs: { params.saveReference ? it : null }, mode: 'copy'
-
-        input:
-        file gff from gffFile
-
-        output:
-        file "${gff.baseName}.gtf" into gtf_makeSTARindex, gtf_makeHisatSplicesites, gtf_makeHISATindex, gtf_makeSalmonIndex, gtf_makeBED12,
-                                        gtf_star, gtf_dupradar, gtf_featureCounts, gtf_stringtieFPKM, gtf_salmon, gtf_salmon_merge, gtf_qualimap
-
-        script:
-        """
-        gffread $gff --keep-exon-attrs -F -T -o ${gff.baseName}.gtf
-        """
-
-
 /*
  * STEP 14 - MultiQC
  */
