@@ -200,7 +200,7 @@ else if (params.fasta && !params.skipAlignment) {
   } else {
     Channel.fromPath(params.fasta, checkIfExists: true)
         .ifEmpty { exit 1, "Genome fasta file not found: ${params.fasta}" }
-        .into { ch_fasta_for_star_index; ch_fasta_for_hisat_index }
+        .into { ch_fasta_for_star_index; ch_fasta_for_hisat_index; ch_fasta_for_bcftools }
   }
 
 } else if (params.skipAlignment) {
@@ -491,7 +491,7 @@ if (compressedReference) {
         file gz from genome_fasta_gz
 
         output:
-        file "${gz.baseName}" into ch_fasta_for_star_index, ch_fasta_for_hisat_index, ch_fasta_for_salmon_transcripts
+        file "${gz.baseName}" into ch_fasta_for_star_index, ch_fasta_for_hisat_index, ch_fasta_for_salmon_transcripts, ch_fasta_for_bcftools
 
         script:
         """
@@ -1070,7 +1070,7 @@ if (!params.skipAlignment) {
       star_aligned
           .filter { logs, bams -> check_log(logs) }
           .flatMap {  logs, bams -> bams }
-      .into { bam_count; bam_rseqc; bam_qualimap; bam_preseq; bam_markduplicates; bam_featurecounts; bam_stringtieFPKM; bam_forSubsamp; bam_skipSubsamp  }
+      .into { bam_count; bam_rseqc; bam_qualimap; bam_preseq; bam_markduplicates; bam_featurecounts; bam_stringtieFPKM; bam_forSubsamp; bam_skipSubsamp; bam_roi  }
   }
 
 
