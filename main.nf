@@ -695,7 +695,6 @@ if (!params.skipAlignment) {
           file "star" into star_index
 
           script:
-          def avail_mem = task.memory ? "--limitGenomeGenerateRAM ${task.memory.toBytes() - 100000000}" : ''
           """
           mkdir star
           STAR \\
@@ -704,7 +703,7 @@ if (!params.skipAlignment) {
               --sjdbGTFfile $gtf \\
               --genomeDir star/ \\
               --genomeFastaFiles $fasta \\
-              $avail_mem
+              --limitGenomeGenerateRAM 170263683456
           """
       }
   }
@@ -991,7 +990,7 @@ if (!params.removeRiboRNA) {
             """
         }
     }
-}    
+}
 
 /*
  * STEP 3 - align with STAR
