@@ -682,7 +682,7 @@ if (!params.bed12) {
 if (!params.skipAlignment) {
   if (params.aligner == 'star' && !params.star_index && params.fasta) {
       process makeSTARindex {
-          label 'high_memory'
+          clusterOptions '-c 8 --mem=0 -t 48:00:00'
           tag "$fasta"
           publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
                      saveAs: { params.saveReference ? it : null }, mode: 'copy'
