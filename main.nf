@@ -1642,6 +1642,49 @@ if (params.pseudo_aligner == 'salmon') {
     salmon_logs = Channel.empty()
 }
 
+process kallisto {
+      label 'mid_memory'
+      tag "$sample"
+      publishDir "${params.outdir}/kallisto", mode: 'copy'
+
+      input:
+      set sample, file(reads) from trimmed_reads_kallisto
+      file index from kallisto_index
+
+      output:
+      file "${sample}/abundance.h5" into kallisto_h5
+      file "${sample}/abundance.tsv" into kallisto_tsv
+      file "${sample}/run_info.json" into kallisto_json
+
+      script:
+      """
+      kallisto quant -i /camp/home/ziffo/working/oliver/genomes/index/kallisto/transcriptome.idx \\
+          -o ${sample} \\
+          -b 100 \\
+          --rf-stranded \\
+          $reads
+      """
+}
+
+
+if (params.gff && !params.gtf) {
+    process convertGFFtoGTF {
+        tag "$gff"
+        publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
+                   saveAs: { params.saveReference ? it : null }, mode: 'copy'
+
+        input:
+        file gff from gffFile
+
+        output:
+        file "${gff.baseName}.gtf" into gtf_makeSTARindex, gtf_makeHisatSplicesites, gtf_makeHISATindex, gtf_makeSalmonIndex, gtf_makeBED12,
+                                        gtf_star, gtf_dupradar, gtf_featureCounts, gtf_stringtieFPKM, gtf_salmon, gtf_salmon_merge, gtf_qualimap
+
+        script:
+        """
+        gffread $gff --keep-exon-attrs -F -T -o ${gff.baseName}.gtf
+        """
+
 
 /*
  * STEP 14 - MultiQC
